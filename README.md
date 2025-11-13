@@ -4,43 +4,56 @@ A collection of useful system administration and development scripts.
 
 ## Available Scripts
 
-### 1. App Tracker (`app-tracker.py`)
+### 1. App Dashboard (`app-dashboard.html`)
 
-Keep track of all your applications, their URLs, tech stacks, and deployment status.
+A beautiful web-based dashboard to track and access all your applications. Perfect for bookmarking your web apps!
 
 **Features:**
-- Track multiple apps with unique IDs
-- Store URLs for different environments (dev, staging, production)
-- Record tech stack, repository links, and notes
-- Filter apps by status
-- Export to markdown format
-- Clean, colorful CLI interface
+- 🎨 Beautiful, responsive UI with gradient backgrounds
+- 🔍 Search and filter apps by status
+- 🌐 Quick access to all your app URLs (dev, staging, production)
+- 💾 Data stored locally in your browser (localStorage)
+- 📥 Import/Export functionality for backup and sharing
+- ✏️ Easy add, edit, and delete operations
+- 📊 Status badges with color coding
+- 🚀 One-click access to any environment
 
 **Quick Start:**
 ```bash
-# Add a new app
-./app-tracker.py add
+# Simply open the file in your browser
+open app-dashboard.html
+# or
+firefox app-dashboard.html
+# or double-click the file
+```
 
-# List all apps
-./app-tracker.py list
+**Usage:**
+1. Open `app-dashboard.html` in your browser
+2. Click "Add New App" to add your first app
+3. Fill in the details (name, URLs, tech stack, etc.)
+4. Click on any URL to open that app in a new tab
+5. Use filters to view apps by status
+6. Export your data for backup or import on another machine
 
-# List only production apps
-./app-tracker.py list production
+**Data Storage:**
+All data is stored in your browser's localStorage. Use Export to backup your data!
 
-# View detailed info
-./app-tracker.py view <app-id>
+### 2. App Tracker CLI (`app-tracker.py`)
 
-# Edit an app
-./app-tracker.py edit <app-id>
+Command-line version of the app tracker for terminal enthusiasts.
 
-# Export to markdown
-./app-tracker.py export
+**Quick Start:**
+```bash
+./app-tracker.py add              # Add a new app
+./app-tracker.py list             # List all apps
+./app-tracker.py view <app-id>    # View details
+./app-tracker.py export           # Export to markdown
 ```
 
 **Data Storage:**
-All app data is stored in `apps.json` in the same directory.
+CLI version uses `apps.json` in the same directory.
 
-### 2. Systemd Service Creator (`create-systemd-service.sh`)
+### 3. Systemd Service Creator (`create-systemd-service.sh`)
 
 Interactive script to create systemd service files for your scripts and programs.
 
@@ -59,7 +72,8 @@ sudo ./create-systemd-service.sh
 
 ## Requirements
 
-- **App Tracker**: Python 3.6+
+- **App Dashboard**: Any modern web browser (Chrome, Firefox, Safari, Edge)
+- **App Tracker CLI**: Python 3.6+
 - **Systemd Service Creator**: Bash, systemd
 
 ## Installation
