@@ -4,9 +4,9 @@ A collection of useful system administration and development scripts.
 
 ## Available Scripts
 
-### 1. Homelab Dashboard (`app-dashboard.html`)
+### 1. Service Dashboard (`app-dashboard.html`)
 
-A professional, dark-themed web dashboard for managing and accessing your homelab services. Perfect for sysadmins and homelab enthusiasts!
+A professional, dark-themed web dashboard for managing and accessing your services and applications.
 
 **Features:**
 - Professional dark theme with monospace fonts
