@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Apps Dashboard</title>
+    <title>Homelab Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -11,133 +11,223 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --border-color: #334155;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
             padding: 20px;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
         }
 
         header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
         }
 
-        header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
-        header p {
-            opacity: 0.9;
-            font-size: 1.1em;
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title h1 {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--accent-primary);
+            font-family: monospace;
+        }
+
+        .header-title .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 24px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .controls {
             display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
+            gap: 12px;
+            margin-bottom: 24px;
             flex-wrap: wrap;
-            justify-content: center;
         }
 
         .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
+            padding: 10px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 14px;
+            font-weight: 500;
+            font-family: monospace;
+            transition: all 0.2s ease;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-primary);
         }
 
         .btn-primary {
-            background: #10b981;
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
             color: white;
         }
 
         .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-success {
+            background: var(--accent-success);
+            border-color: var(--accent-success);
+            color: white;
+        }
+
+        .btn-success:hover {
             background: #059669;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
         }
 
-        .btn-secondary {
-            background: white;
-            color: #667eea;
-        }
-
-        .btn-secondary:hover {
-            background: #f3f4f6;
-            transform: translateY(-2px);
-        }
-
-        .filter-buttons {
+        .filter-bar {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
             display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
+            gap: 16px;
             flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .filter-label {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .filter-btn {
-            padding: 8px 16px;
-            border: 2px solid white;
+            padding: 6px 14px;
+            border: 1px solid var(--border-color);
             background: transparent;
-            color: white;
-            border-radius: 20px;
+            color: var(--text-secondary);
+            border-radius: 4px;
             cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-size: 0.85em;
+            font-family: monospace;
+            transition: all 0.2s ease;
         }
 
-        .filter-btn:hover, .filter-btn.active {
-            background: white;
-            color: #667eea;
+        .filter-btn:hover {
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
         }
 
         .search-box {
-            text-align: center;
-            margin-bottom: 30px;
+            flex: 1;
+            min-width: 250px;
         }
 
         .search-box input {
-            padding: 12px 20px;
             width: 100%;
-            max-width: 500px;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: monospace;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
         }
 
         .apps-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
             gap: 20px;
-            margin-bottom: 40px;
         }
 
         .app-card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            position: relative;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.2s ease;
         }
 
         .app-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
         }
 
         .app-card-header {
@@ -145,123 +235,135 @@
             justify-content: space-between;
             align-items: start;
             margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .app-name {
-            font-size: 1.4em;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
         .status-badge {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.75em;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7em;
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .status-development {
-            background: #fef3c7;
-            color: #92400e;
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
         .status-staging {
-            background: #dbeafe;
-            color: #1e40af;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-primary);
+            border: 1px solid rgba(59, 130, 246, 0.3);
         }
 
         .status-production {
-            background: #d1fae5;
-            color: #065f46;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .status-archived {
-            background: #f3f4f6;
-            color: #6b7280;
+            background: rgba(148, 163, 184, 0.15);
+            color: var(--text-secondary);
+            border: 1px solid rgba(148, 163, 184, 0.3);
         }
 
         .app-description {
-            color: #6b7280;
-            margin-bottom: 16px;
-            font-size: 0.95em;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-size: 0.9em;
             line-height: 1.5;
         }
 
         .app-tech {
-            display: inline-block;
-            background: #f3f4f6;
-            color: #4b5563;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
             padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.85em;
-            margin-bottom: 16px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
         }
 
         .app-urls {
-            margin-bottom: 16px;
+            margin: 12px 0;
         }
 
         .url-link {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             padding: 8px 12px;
             margin: 6px 0;
-            background: #f9fafb;
-            border-radius: 6px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
             text-decoration: none;
-            color: #667eea;
-            font-weight: 500;
+            color: var(--accent-primary);
+            font-size: 0.85em;
             transition: all 0.2s ease;
         }
 
         .url-link:hover {
-            background: #667eea;
+            background: var(--accent-primary);
             color: white;
+            border-color: var(--accent-primary);
         }
 
         .url-label {
             font-size: 0.75em;
             text-transform: uppercase;
-            color: #9ca3af;
-            margin-right: 8px;
+            color: var(--text-secondary);
+            min-width: 70px;
+            letter-spacing: 0.05em;
+        }
+
+        .url-link:hover .url-label {
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .app-actions {
             display: flex;
             gap: 8px;
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid #e5e7eb;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
         }
 
         .action-btn {
             flex: 1;
             padding: 8px;
-            border: none;
-            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 0.9em;
-            font-weight: 600;
+            font-size: 0.85em;
+            font-family: monospace;
             transition: all 0.2s ease;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
         }
 
-        .edit-btn {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .edit-btn:hover {
-            background: #2563eb;
-        }
-
-        .delete-btn {
-            background: #ef4444;
-            color: white;
+        .action-btn:hover {
+            border-color: var(--accent-primary);
         }
 
         .delete-btn:hover {
-            background: #dc2626;
+            background: var(--accent-danger);
+            border-color: var(--accent-danger);
+            color: white;
         }
 
         .modal {
@@ -271,7 +373,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.8);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -283,8 +385,9 @@
         }
 
         .modal-content {
-            background: white;
-            border-radius: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             padding: 32px;
             max-width: 600px;
             width: 100%;
@@ -293,10 +396,12 @@
         }
 
         .modal-header {
-            font-size: 1.8em;
-            font-weight: 700;
+            font-size: 1.4em;
+            font-weight: 600;
             margin-bottom: 24px;
-            color: #1f2937;
+            color: var(--text-primary);
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .form-group {
@@ -306,8 +411,11 @@
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
-            color: #374151;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .form-group input,
@@ -315,9 +423,12 @@
         .form-group select {
             width: 100%;
             padding: 10px 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
-            font-size: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-family: monospace;
             transition: border-color 0.2s ease;
         }
 
@@ -325,7 +436,7 @@
         .form-group textarea:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--accent-primary);
         }
 
         .form-group textarea {
@@ -339,32 +450,69 @@
             margin-top: 24px;
         }
 
+        .welcome-screen {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 48px;
+            text-align: center;
+            max-width: 600px;
+            margin: 100px auto;
+        }
+
+        .welcome-screen h2 {
+            font-size: 2em;
+            margin-bottom: 16px;
+            color: var(--accent-primary);
+        }
+
+        .welcome-screen p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .welcome-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: white;
+            color: var(--text-secondary);
+            grid-column: 1/-1;
         }
 
-        .empty-state h2 {
-            font-size: 2em;
-            margin-bottom: 16px;
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
         }
 
-        .empty-state p {
-            font-size: 1.2em;
-            opacity: 0.9;
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
         }
 
-        .url-group {
-            background: #f9fafb;
-            padding: 16px;
+        .info-banner {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
             border-radius: 8px;
-            margin-bottom: 16px;
+            padding: 16px;
+            margin-bottom: 24px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
         }
 
-        .url-group label {
-            font-size: 0.9em;
-            color: #6b7280;
+        .info-banner a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        .info-banner a:hover {
+            text-decoration: underline;
         }
 
         @media (max-width: 768px) {
@@ -372,12 +520,18 @@
                 grid-template-columns: 1fr;
             }
 
-            header h1 {
-                font-size: 2em;
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
             }
 
-            .modal-content {
-                padding: 24px;
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                width: 100%;
             }
         }
     </style>
@@ -385,68 +539,109 @@
 <body>
     <div class="container">
         <header>
-            <h1>🚀 My Apps Dashboard</h1>
-            <p>Quick access to all your applications</p>
+            <div class="header-content">
+                <div class="header-title">
+                    <div class="status-indicator"></div>
+                    <h1>// HOMELAB_DASHBOARD</h1>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <span>TOTAL:</span>
+                        <span id="totalApps">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>ONLINE:</span>
+                        <span id="onlineApps">0</span>
+                    </div>
+                </div>
+            </div>
         </header>
 
-        <div class="controls">
-            <button class="btn btn-primary" onclick="openAddModal()">+ Add New App</button>
-            <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
-            <button class="btn btn-secondary" onclick="importData()">Import Data</button>
+        <div id="mainContent" style="display: none;">
+            <div class="info-banner">
+                <strong>💾 Data Management:</strong> Your apps are stored in browser localStorage.
+                Use <strong>Export JSON</strong> to backup, and <strong>Import JSON</strong> to restore.
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" onclick="openAddModal()">+ Add Service</button>
+                <button class="btn btn-success" onclick="exportToFile()">Export JSON</button>
+                <button class="btn" onclick="document.getElementById('importFile').click()">Import JSON</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importFromFile(event)">
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-section">
+                    <span class="filter-label">Filter:</span>
+                    <button class="filter-btn active" onclick="filterApps('all')">ALL</button>
+                    <button class="filter-btn" onclick="filterApps('development')">DEV</button>
+                    <button class="filter-btn" onclick="filterApps('staging')">STAGE</button>
+                    <button class="filter-btn" onclick="filterApps('production')">PROD</button>
+                    <button class="filter-btn" onclick="filterApps('archived')">ARCHIVE</button>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="> search services..." oninput="searchApps()">
+                </div>
+            </div>
+
+            <div class="apps-grid" id="appsGrid"></div>
         </div>
 
-        <div class="filter-buttons">
-            <button class="filter-btn active" onclick="filterApps('all')">All</button>
-            <button class="filter-btn" onclick="filterApps('development')">Development</button>
-            <button class="filter-btn" onclick="filterApps('staging')">Staging</button>
-            <button class="filter-btn" onclick="filterApps('production')">Production</button>
-            <button class="filter-btn" onclick="filterApps('archived')">Archived</button>
-        </div>
+        <div id="welcomeScreen" class="welcome-screen">
+            <h2>Welcome to Homelab Dashboard</h2>
+            <p>Get started by importing your services from a JSON file, downloading a template, or creating your first service manually.</p>
+            <div class="welcome-actions">
+                <button class="btn btn-primary" onclick="document.getElementById('welcomeImportFile').click()">
+                    Import Existing apps.json
+                </button>
+                <input type="file" id="welcomeImportFile" accept=".json" style="display: none;" onchange="importFromFile(event)">
 
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search apps..." oninput="searchApps()">
-        </div>
+                <button class="btn btn-success" onclick="downloadTemplate()">
+                    Download Template apps.json
+                </button>
 
-        <div class="apps-grid" id="appsGrid"></div>
+                <button class="btn" onclick="startFresh()">
+                    Start Fresh
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Add/Edit Modal -->
     <div class="modal" id="appModal">
         <div class="modal-content">
-            <div class="modal-header" id="modalTitle">Add New App</div>
+            <div class="modal-header" id="modalTitle">Add New Service</div>
             <form id="appForm" onsubmit="saveApp(event)">
                 <input type="hidden" id="appId">
 
                 <div class="form-group">
-                    <label for="appName">App Name *</label>
-                    <input type="text" id="appName" required>
+                    <label for="appName">Service Name *</label>
+                    <input type="text" id="appName" required placeholder="My Application">
                 </div>
 
                 <div class="form-group">
                     <label for="appDescription">Description</label>
-                    <textarea id="appDescription"></textarea>
+                    <textarea id="appDescription" placeholder="Brief description of this service"></textarea>
                 </div>
 
-                <div class="url-group">
-                    <div class="form-group">
-                        <label for="urlDev">Development URL</label>
-                        <input type="url" id="urlDev" placeholder="http://localhost:3000">
-                    </div>
+                <div class="form-group">
+                    <label for="urlDev">Development URL</label>
+                    <input type="url" id="urlDev" placeholder="http://localhost:3000">
+                </div>
 
-                    <div class="form-group">
-                        <label for="urlStaging">Staging URL</label>
-                        <input type="url" id="urlStaging" placeholder="https://staging.example.com">
-                    </div>
+                <div class="form-group">
+                    <label for="urlStaging">Staging URL</label>
+                    <input type="url" id="urlStaging" placeholder="https://staging.example.com">
+                </div>
 
-                    <div class="form-group">
-                        <label for="urlProd">Production URL</label>
-                        <input type="url" id="urlProd" placeholder="https://example.com">
-                    </div>
+                <div class="form-group">
+                    <label for="urlProd">Production URL</label>
+                    <input type="url" id="urlProd" placeholder="https://example.com">
+                </div>
 
-                    <div class="form-group">
-                        <label for="urlOther">Other URL</label>
-                        <input type="url" id="urlOther" placeholder="https://admin.example.com">
-                    </div>
+                <div class="form-group">
+                    <label for="urlOther">Other URL</label>
+                    <input type="url" id="urlOther" placeholder="https://admin.example.com">
                 </div>
 
                 <div class="form-group">
@@ -456,7 +651,7 @@
 
                 <div class="form-group">
                     <label for="appTech">Technology Stack</label>
-                    <input type="text" id="appTech" placeholder="React, Node.js, PostgreSQL">
+                    <input type="text" id="appTech" placeholder="Docker, Node.js, PostgreSQL">
                 </div>
 
                 <div class="form-group">
@@ -471,12 +666,12 @@
 
                 <div class="form-group">
                     <label for="appNotes">Notes</label>
-                    <textarea id="appNotes"></textarea>
+                    <textarea id="appNotes" placeholder="Additional notes or configuration details"></textarea>
                 </div>
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary" style="flex: 1;">Save</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
                 </div>
             </form>
         </div>
@@ -487,21 +682,88 @@
         let currentFilter = 'all';
         let editingAppId = null;
 
-        // Load apps from localStorage on page load
-        function loadApps() {
-            const stored = localStorage.getItem('myApps');
-            if (stored) {
-                apps = JSON.parse(stored);
+        // Initialize
+        function init() {
+            loadApps();
+            if (apps.length === 0) {
+                showWelcomeScreen();
+            } else {
+                showMainContent();
             }
+        }
+
+        function showWelcomeScreen() {
+            document.getElementById('welcomeScreen').style.display = 'block';
+            document.getElementById('mainContent').style.display = 'none';
+        }
+
+        function showMainContent() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
             renderApps();
+            updateStats();
         }
 
-        // Save apps to localStorage
+        function startFresh() {
+            apps = [];
+            saveAppsToStorage();
+            showMainContent();
+        }
+
+        function downloadTemplate() {
+            const template = {
+                apps: [
+                    {
+                        id: "example-service",
+                        name: "Example Service",
+                        description: "This is an example service to show the structure",
+                        urls: {
+                            development: "http://localhost:8080",
+                            production: "https://example.com"
+                        },
+                        repository: "https://github.com/user/repo",
+                        tech_stack: "Docker, Python, PostgreSQL",
+                        status: "production",
+                        notes: "Example notes here",
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }
+                ]
+            };
+
+            const dataStr = JSON.stringify(template, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'apps.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function loadApps() {
+            const stored = localStorage.getItem('homelabApps');
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    apps = data.apps || [];
+                } catch (e) {
+                    console.error('Error loading apps:', e);
+                    apps = [];
+                }
+            }
+        }
+
         function saveAppsToStorage() {
-            localStorage.setItem('myApps', JSON.stringify(apps));
+            localStorage.setItem('homelabApps', JSON.stringify({ apps }));
         }
 
-        // Generate unique ID
+        function updateStats() {
+            document.getElementById('totalApps').textContent = apps.length;
+            document.getElementById('onlineApps').textContent =
+                apps.filter(app => app.status === 'production').length;
+        }
+
         function generateId(name) {
             const baseId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
             let id = baseId;
@@ -513,7 +775,6 @@
             return id;
         }
 
-        // Render apps
         function renderApps() {
             const grid = document.getElementById('appsGrid');
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -529,9 +790,9 @@
 
             if (filteredApps.length === 0) {
                 grid.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1/-1;">
-                        <h2>No apps found</h2>
-                        <p>Add your first app to get started!</p>
+                    <div class="empty-state">
+                        <h2>No services found</h2>
+                        <p>Add your first service to get started</p>
                     </div>
                 `;
                 return;
@@ -544,15 +805,26 @@
                         <span class="status-badge status-${app.status}">${app.status}</span>
                     </div>
                     ${app.description ? `<div class="app-description">${app.description}</div>` : ''}
-                    ${app.tech_stack ? `<div class="app-tech">💻 ${app.tech_stack}</div>` : ''}
+                    ${app.tech_stack ? `<div class="app-tech">⚙ ${app.tech_stack}</div>` : ''}
                     ${renderUrls(app.urls)}
-                    ${app.repository ? `<a href="${app.repository}" target="_blank" class="url-link">📦 Repository</a>` : ''}
+                    ${app.repository ? `<a href="${app.repository}" target="_blank" class="url-link"><span class="url-label">repo</span>${formatUrl(app.repository)}</a>` : ''}
                     <div class="app-actions">
-                        <button class="action-btn edit-btn" onclick="editApp('${app.id}')">Edit</button>
-                        <button class="action-btn delete-btn" onclick="deleteApp('${app.id}')">Delete</button>
+                        <button class="action-btn" onclick="editApp('${app.id}')">EDIT</button>
+                        <button class="action-btn delete-btn" onclick="deleteApp('${app.id}')">DELETE</button>
                     </div>
                 </div>
             `).join('');
+
+            updateStats();
+        }
+
+        function formatUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                return urlObj.hostname + urlObj.pathname;
+            } catch {
+                return url;
+            }
         }
 
         function renderUrls(urls) {
@@ -563,46 +835,39 @@
                     ${Object.entries(urls).map(([env, url]) => `
                         <a href="${url}" target="_blank" class="url-link">
                             <span class="url-label">${env}</span>
-                            ${url}
+                            ${formatUrl(url)}
                         </a>
                     `).join('')}
                 </div>
             `;
         }
 
-        // Filter apps
         function filterApps(status) {
             currentFilter = status;
-
-            // Update active button
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
-
             renderApps();
         }
 
-        // Search apps
         function searchApps() {
             renderApps();
         }
 
-        // Open add modal
         function openAddModal() {
             editingAppId = null;
-            document.getElementById('modalTitle').textContent = 'Add New App';
+            document.getElementById('modalTitle').textContent = 'Add New Service';
             document.getElementById('appForm').reset();
             document.getElementById('appModal').classList.add('active');
         }
 
-        // Edit app
         function editApp(id) {
             editingAppId = id;
             const app = apps.find(a => a.id === id);
             if (!app) return;
 
-            document.getElementById('modalTitle').textContent = 'Edit App';
+            document.getElementById('modalTitle').textContent = 'Edit Service';
             document.getElementById('appId').value = app.id;
             document.getElementById('appName').value = app.name;
             document.getElementById('appDescription').value = app.description || '';
@@ -618,14 +883,12 @@
             document.getElementById('appModal').classList.add('active');
         }
 
-        // Close modal
         function closeModal() {
             document.getElementById('appModal').classList.remove('active');
             document.getElementById('appForm').reset();
             editingAppId = null;
         }
 
-        // Save app
         function saveApp(event) {
             event.preventDefault();
 
@@ -652,13 +915,11 @@
             };
 
             if (editingAppId) {
-                // Update existing app
                 const index = apps.findIndex(a => a.id === editingAppId);
                 if (index !== -1) {
                     apps[index] = { ...apps[index], ...appData };
                 }
             } else {
-                // Add new app
                 appData.id = generateId(appData.name);
                 appData.created_at = new Date().toISOString();
                 apps.push(appData);
@@ -669,71 +930,63 @@
             closeModal();
         }
 
-        // Delete app
         function deleteApp(id) {
             const app = apps.find(a => a.id === id);
             if (!app) return;
 
-            if (confirm(`Are you sure you want to delete "${app.name}"?`)) {
+            if (confirm(`Delete "${app.name}"?`)) {
                 apps = apps.filter(a => a.id !== id);
                 saveAppsToStorage();
                 renderApps();
             }
         }
 
-        // Export data
-        function exportData() {
+        function exportToFile() {
             const dataStr = JSON.stringify({ apps }, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `apps-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `apps-${new Date().toISOString().split('T')[0]}.json`;
             link.click();
             URL.revokeObjectURL(url);
         }
 
-        // Import data
-        function importData() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'application/json';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
+        function importFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const data = JSON.parse(event.target.result);
-                        if (data.apps && Array.isArray(data.apps)) {
-                            if (confirm(`Import ${data.apps.length} apps? This will replace your current data.`)) {
-                                apps = data.apps;
-                                saveAppsToStorage();
-                                renderApps();
-                                alert('Import successful!');
-                            }
-                        } else {
-                            alert('Invalid file format');
-                        }
-                    } catch (error) {
-                        alert('Error reading file: ' + error.message);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.apps && Array.isArray(data.apps)) {
+                        apps = data.apps;
+                        saveAppsToStorage();
+                        showMainContent();
+                        renderApps();
+                    } else {
+                        alert('Invalid JSON format. Expected {apps: [...]}');
                     }
-                };
-                reader.readAsText(file);
+                } catch (error) {
+                    alert('Error reading file: ' + error.message);
+                }
             };
-            input.click();
+            reader.readAsText(file);
+
+            // Reset file input
+            event.target.value = '';
         }
 
-        // Close modal when clicking outside
+        // Close modal on outside click
         document.getElementById('appModal').addEventListener('click', (e) => {
             if (e.target.id === 'appModal') {
                 closeModal();
             }
         });
 
-        // Initialize
-        loadApps();
+        // Initialize on load
+        init();
     </script>
 </body>
 </html>

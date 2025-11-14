@@ -4,39 +4,47 @@ A collection of useful system administration and development scripts.
 
 ## Available Scripts
 
-### 1. App Dashboard (`app-dashboard.html`)
+### 1. Homelab Dashboard (`app-dashboard.html`)
 
-A beautiful web-based dashboard to track and access all your applications. Perfect for bookmarking your web apps!
+A professional, dark-themed web dashboard for managing and accessing your homelab services. Perfect for sysadmins and homelab enthusiasts!
 
 **Features:**
-- 🎨 Beautiful, responsive UI with gradient backgrounds
-- 🔍 Search and filter apps by status
-- 🌐 Quick access to all your app URLs (dev, staging, production)
-- 💾 Data stored locally in your browser (localStorage)
-- 📥 Import/Export functionality for backup and sharing
-- ✏️ Easy add, edit, and delete operations
-- 📊 Status badges with color coding
-- 🚀 One-click access to any environment
+- Professional dark theme with monospace fonts
+- Real-time service statistics (total services, production count)
+- Search and filter by environment (dev/staging/prod/archive)
+- Quick access to all service URLs across environments
+- Data persistence via localStorage with JSON import/export
+- First-run wizard with template download
+- Status badges with semantic color coding
+- Responsive grid layout for any screen size
 
 **Quick Start:**
 ```bash
-# Simply open the file in your browser
+# Open the dashboard in your browser
 open app-dashboard.html
 # or
 firefox app-dashboard.html
-# or double-click the file
 ```
 
-**Usage:**
-1. Open `app-dashboard.html` in your browser
-2. Click "Add New App" to add your first app
-3. Fill in the details (name, URLs, tech stack, etc.)
-4. Click on any URL to open that app in a new tab
-5. Use filters to view apps by status
-6. Export your data for backup or import on another machine
+**First-Time Setup:**
+1. Open `app-dashboard.html` - you'll see a welcome screen
+2. Choose one of three options:
+   - **Import existing apps.json** - if you already have a config
+   - **Download template** - get a starter `apps.json` to customize
+   - **Start fresh** - begin with an empty dashboard
 
-**Data Storage:**
-All data is stored in your browser's localStorage. Use Export to backup your data!
+**Daily Usage:**
+1. Click "+ Add Service" to register new services
+2. Enter URLs for different environments (dev, staging, production)
+3. Click any URL to instantly access that service
+4. Use filter buttons (ALL/DEV/STAGE/PROD/ARCHIVE) to organize view
+5. Export your config regularly as backup
+
+**Data Management:**
+- Data stored in browser localStorage (persistent across sessions)
+- Export creates timestamped JSON file for backup
+- Import replaces current data with JSON file contents
+- Template includes example service structure
 
 ### 2. App Tracker CLI (`app-tracker.py`)
 
