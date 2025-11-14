@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Spot Barcode Generator</title>
+        <meta name="description" content="Barcode generator and priority calculator for warehouse operations">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+
+        <script>
+            $(document).ready(function()
+            {
+              //printer barcode
+              $("#prtBarcode").JsBarcode("T0144PRT0144", {
+                        background: "#ffffff"
+                    });
+
+
+                $("#brInput").keyup(function()
+                {
+                    //$("#brBarcode").JsBarcode($(this).val().toUpperCase());
+                    JsBarcode("#brBarcode", $(this).val().toUpperCase(), {
+                        background: "#ffffff"
+                    });
+                });
+
+                $("#ftInput, #prioInput").keyup(function()
+                {
+                    var pLeft = parseInt($("#prioInput").val());
+                    console.log(pLeft);
+                    var ft = parseInt($("#ftInput").val());
+                    console.log(ft);
+                    var perc = ft/(ft+pLeft)*100;
+                    $("#percOutput").html("");
+
+                    if(ft && pLeft > 0)
+                    {
+                      // Add color coding based on percentage
+                      var percClass = perc >= 70 ? 'perc-good' : 'perc-warning';
+                      $("#percOutput").html("<div class='percentage-display " + percClass + "'>" + perc.toFixed(2) + "%</div>");
+                    }
+
+                    //calculate how many more need to be pulled if under 70%
+                    if(perc < 70 && ft && pLeft > 0)
+                    {
+                      var leftToPull = Math.ceil(0.7 * (ft+pLeft) - ft);
+                      $("#percOutput").append("<div class='pull-remaining'>" + leftToPull + " left to pull to reach 70%</div>");
+                    }
+
+                });
+            });
+        </script>
+
+<style>
+    /* Disables mobile Safari from zooming in when clicking into text field */
+    @supports (-webkit-overflow-scrolling: touch) {
+      select,
+      textarea,
+      input {
+        font-size: 16px;
+      }
+    }
+
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --accent-color: #1abc9c;
+      --success-color: #27ae60;
+      --warning-color: #e67e22;
+      --danger-color: #e74c3c;
+      --bg-light: #ecf0f1;
+      --bg-white: #ffffff;
+      --text-dark: #2c3e50;
+      --text-light: #7f8c8d;
+      --border-color: #bdc3c7;
+      --shadow: 0 2px 10px rgba(0,0,0,0.1);
+      --shadow-hover: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: var(--text-dark);
+    }
+
+    .app-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .app-header {
+      background: var(--bg-white);
+      padding: 30px;
+      border-radius: 12px 12px 0 0;
+      box-shadow: var(--shadow);
+      text-align: center;
+      border-bottom: 4px solid var(--secondary-color);
+    }
+
+    .app-header h1 {
+      color: var(--primary-color);
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+
+    .app-header p {
+      color: var(--text-light);
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .container {
+      background-color: var(--bg-white);
+      border-radius: 0 0 12px 12px;
+      box-shadow: var(--shadow);
+      padding: 30px;
+    }
+
+    .section {
+      background: var(--bg-light);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .section:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-2px);
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-light);
+      margin-bottom: 12px;
+    }
+
+    .label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 16px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+      background: var(--bg-white);
+    }
+
+    input[type="text"]:focus,
+    input[type="tel"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--secondary-color);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+
+    .barcode-container {
+      background: var(--bg-white);
+      padding: 20px;
+      border-radius: 6px;
+      text-align: center;
+      margin-top: 12px;
+      border: 2px dashed var(--border-color);
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .barcode-container img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .percentage-display {
+      font-size: 48px;
+      font-weight: 700;
+      text-align: center;
+      padding: 30px;
+      border-radius: 8px;
+      margin: 20px 0;
+      transition: all 0.3s ease;
+    }
+
+    .percentage-display.perc-good {
+      background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+    }
+
+    .percentage-display.perc-warning {
+      background: linear-gradient(135deg, #e67e22 0%, #e74c3c 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);
+    }
+
+    .pull-remaining {
+      background: var(--bg-white);
+      color: var(--text-dark);
+      padding: 16px;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 16px;
+      border-left: 4px solid var(--warning-color);
+      box-shadow: var(--shadow);
+    }
+
+    .row:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+
+    /* Responsive layout */
+    @media screen and (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+
+      .app-header {
+        padding: 20px;
+        border-radius: 8px 8px 0 0;
+      }
+
+      .app-header h1 {
+        font-size: 24px;
+      }
+
+      .container {
+        padding: 20px;
+        border-radius: 0 0 8px 8px;
+      }
+
+      .section {
+        padding: 15px;
+      }
+
+      .percentage-display {
+        font-size: 36px;
+        padding: 20px;
+      }
+    }
+
+    /* Loading animation for empty barcodes */
+    .barcode-container:empty::after {
+      content: "Enter data to generate barcode";
+      color: var(--text-light);
+      font-size: 14px;
+      font-style: italic;
+    }
+  </style>
+
+    </head>
+    <body>
+        <div class="app-container">
+            <div class="app-header">
+                <h1>🏷️ Spot Barcode Generator</h1>
+                <p>Warehouse Inventory Management Tool</p>
+            </div>
+
+            <div class="container">
+                <!-- Barcode Section -->
+                <div class="section">
+                    <div class="section-title">Barcode Generator</div>
+                    <div class="input-group">
+                        <label class="label" for="brInput">Location Barcode</label>
+                        <input
+                            type="text"
+                            id="brInput"
+                            name="brInput"
+                            placeholder="01E001A01"
+                            maxlength="9"
+                        />
+                    </div>
+                    <div class="barcode-container">
+                        <img id="brBarcode" alt="Generated barcode will appear here"/>
+                    </div>
+                </div>
+
+                <!-- Priority Calculator Section -->
+                <div class="section">
+                    <div class="section-title">Priority Calculator</div>
+                    <div class="input-group">
+                        <label class="label" for="prioInput">Priorities Remaining</label>
+                        <input
+                            type="text"
+                            id="prioInput"
+                            name="prioInput"
+                            placeholder="99"
+                            maxlength="9"
+                        />
+                    </div>
+
+                    <div class="input-group">
+                        <label class="label" for="ftInput">Items Filled Today</label>
+                        <input
+                            type="text"
+                            id="ftInput"
+                            name="ftInput"
+                            placeholder="500"
+                            maxlength="9"
+                        />
+                    </div>
+
+                    <div id="percOutput"></div>
+                </div>
+
+                <!-- Printer Barcode Section -->
+                <div class="section">
+                    <div class="section-title">Printer Barcode</div>
+                    <div class="barcode-container">
+                        <img id="prtBarcode" alt="Printer barcode"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
