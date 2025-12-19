@@ -1,0 +1,323 @@
+#!/bin/bash
+
+SCRIPT_NAME="remember"
+INSTALL_DIR="${HOME}/.local/bin"
+COMMANDS_FILE="${HOME}/.remember-commands.txt"
+
+# Add INSTALL_DIR to PATH for current session (so fzf can be found after install)
+export PATH="$INSTALL_DIR:$PATH"
+
+# Function to check if directory is in PATH
+in_path() {
+    case ":$PATH:" in
+        *":$1:"*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# Function to add to PATH in shell config
+add_to_path() {
+    local shell_config
+
+    # Detect user's login shell, not the script's execution shell
+    local user_shell=$(basename "$SHELL")
+
+    if [ "$user_shell" = "zsh" ]; then
+        shell_config="${HOME}/.zshrc"
+    elif [ "$user_shell" = "bash" ]; then
+        shell_config="${HOME}/.bashrc"
+    else
+        shell_config="${HOME}/.profile"
+    fi
+    
+    if ! grep -q ".local/bin" "$shell_config" 2>/dev/null; then
+        echo "📝 Adding ~/.local/bin to PATH in $shell_config"
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$shell_config"
+        echo "🔄 Restart your shell or run: source $shell_config"
+        echo ""
+    fi
+}
+
+# Function to install fzf binary directly
+install_fzf_binary() {
+    echo "📥 Installing fzf binary to ~/.local/bin..."
+
+    mkdir -p "$INSTALL_DIR"
+
+    # Detect architecture
+    local arch=$(uname -m)
+    local os=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+    case "$arch" in
+        x86_64) arch="amd64" ;;
+        aarch64|arm64) arch="arm64" ;;
+        *) echo "❌ Unsupported architecture: $arch"; return 1 ;;
+    esac
+
+    # Get the actual download URL from GitHub API
+    local api_url="https://api.github.com/repos/junegunn/fzf/releases/latest"
+    local download_url
+
+    if command -v curl &> /dev/null; then
+        download_url=$(curl -s "$api_url" | grep "browser_download_url.*${os}_${arch}.tar.gz" | cut -d '"' -f 4)
+    elif command -v wget &> /dev/null; then
+        download_url=$(wget -qO- "$api_url" | grep "browser_download_url.*${os}_${arch}.tar.gz" | cut -d '"' -f 4)
+    else
+        echo "❌ Need curl or wget to download fzf"
+        return 1
+    fi
+
+    if [ -z "$download_url" ]; then
+        echo "❌ Could not find fzf download URL for ${os}_${arch}"
+        return 1
+    fi
+
+    echo "📦 Downloading from: $download_url"
+
+    # Download and extract
+    if command -v curl &> /dev/null; then
+        if ! curl -sL "$download_url" | tar -xz -C "$INSTALL_DIR"; then
+            echo "❌ Failed to download or extract fzf"
+            return 1
+        fi
+    elif command -v wget &> /dev/null; then
+        if ! wget -qO- "$download_url" | tar -xz -C "$INSTALL_DIR"; then
+            echo "❌ Failed to download or extract fzf"
+            return 1
+        fi
+    fi
+
+    # Verify the file was extracted
+    if [ ! -f "$INSTALL_DIR/fzf" ]; then
+        echo "❌ fzf binary not found after extraction"
+        return 1
+    fi
+
+    chmod +x "$INSTALL_DIR/fzf"
+    return 0
+}
+
+# Function to install fzf
+install_fzf() {
+    echo "📦 fzf not found - installing..."
+    
+    local installed=false
+    
+    # Detect OS and try package manager first
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS - try homebrew first
+        if command -v brew &> /dev/null; then
+            echo "🍺 Trying Homebrew..."
+            if brew install fzf 2>/dev/null; then
+                installed=true
+            fi
+        fi
+    else
+        # Linux - try package manager
+        if command -v apt &> /dev/null; then
+            echo "📦 Trying apt..."
+            if sudo apt update 2>/dev/null && sudo apt install -y fzf 2>/dev/null; then
+                installed=true
+            fi
+        elif command -v dnf &> /dev/null; then
+            echo "📦 Trying dnf..."
+            if sudo dnf install -y fzf 2>/dev/null; then
+                installed=true
+            fi
+        elif command -v pacman &> /dev/null; then
+            echo "📦 Trying pacman..."
+            if sudo pacman -S --noconfirm fzf 2>/dev/null; then
+                installed=true
+            fi
+        fi
+    fi
+    
+    # Fallback to binary if package manager failed
+    if [ "$installed" = false ]; then
+        echo "📦 Package manager failed, falling back to binary install..."
+        if ! install_fzf_binary; then
+            echo "❌ fzf installation failed. Please install manually:"
+            echo "   https://github.com/junegunn/fzf#installation"
+            exit 1
+        fi
+    fi
+    
+    # Verify installation
+    if ! command -v fzf &> /dev/null; then
+        echo "❌ fzf installation failed. Please install manually:"
+        echo "   https://github.com/junegunn/fzf#installation"
+        exit 1
+    fi
+    
+    echo "✅ fzf installed successfully!"
+}
+
+# Check for fzf
+if ! command -v fzf &> /dev/null; then
+    install_fzf
+fi
+
+# Auto-install if not in proper location
+CURRENT_PATH="$(readlink -f "$0" 2>/dev/null || realpath "$0" 2>/dev/null || echo "$0")"
+CURRENT_DIR="$(dirname "$CURRENT_PATH")"
+
+if [ "$CURRENT_DIR" != "$INSTALL_DIR" ]; then
+    echo "🚀 First run detected - installing..."
+    mkdir -p "$INSTALL_DIR"
+    cp "$0" "$INSTALL_DIR/$SCRIPT_NAME"
+    chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
+    echo "✅ Installed to $INSTALL_DIR/$SCRIPT_NAME"
+    
+    # Fix PATH if needed
+    if ! in_path "$INSTALL_DIR"; then
+        add_to_path
+    fi
+    
+    # Re-exec from new location if PATH is fixed
+    if in_path "$INSTALL_DIR"; then
+        echo "🎯 Running from installed location..."
+        exec "$INSTALL_DIR/$SCRIPT_NAME" "$@"
+    else
+        echo "⚠️  PATH updated but not active in this shell"
+        echo "Run: $SCRIPT_NAME (after restarting shell)"
+        exit 0
+    fi
+fi
+
+# Create default commands file if it doesn't exist
+if [ ! -f "$COMMANDS_FILE" ]; then
+    cat > "$COMMANDS_FILE" << 'EOF'
+# SSH Keys
+ssh-keygen -t ed25519 -C "{comment}"
+ssh-copy-id -i ~/.ssh/{key_name}.pub {user}@{host}
+ssh-add ~/.ssh/{key_name}
+eval "$(ssh-agent -s)"
+
+# SSH Tunneling
+ssh -L {local_port}:localhost:{remote_port} {user}@{host}
+ssh -D {local_port} {user}@{host}  # SOCKS proxy
+ssh -R {remote_port}:localhost:{local_port} {user}@{host}
+ssh -N -f -L {local_port}:localhost:{remote_port} {user}@{host}  # background
+
+# File transfers
+scp {user}@{host}:{remote_path} {local_path}
+scp -r {local_dir} {user}@{host}:{remote_path}
+rsync -avz -e ssh {user}@{host}:{remote_path} {local_path}
+rsync -avz --delete {source}/ {destination}/
+rsync -avzP --exclude='node_modules' {source}/ {dest}/  # with progress
+
+# Podman - Container management
+podman ps -a
+podman logs -f {container}
+podman exec -it {container} /bin/bash
+podman stop {container}
+podman rm {container}
+podman inspect {container}
+podman run -d --name {name} -p {host_port}:{container_port} {image}
+
+# Podman - Images
+podman images
+podman pull {image}
+podman rmi {image}
+podman build -t {tag} .
+
+# Podman - Volumes
+podman volume ls
+podman volume inspect {volume}
+podman volume create {volume}
+
+# Podman - Networks
+podman network ls
+podman network inspect {network}
+
+# Systemd - Services
+systemctl status {service}
+systemctl start {service}
+systemctl stop {service}
+systemctl restart {service}
+systemctl enable {service}
+systemctl disable {service}
+systemctl --user status {service}
+systemctl --user restart {service}
+
+# Systemd - Logs
+journalctl -fu {service}
+journalctl -u {service} --since "1 hour ago"
+journalctl -u {service} --since today
+journalctl -xe
+journalctl --disk-usage
+journalctl --vacuum-time=7d
+
+# Git - Daily operations
+git status
+git add {file}
+git commit -m "{message}"
+git push origin {branch}
+git pull origin {branch}
+git diff {file}
+git log --oneline --graph --all -n 20
+
+# Git - Branch management
+git branch
+git checkout -b {new_branch}
+git checkout {branch}
+git merge {branch}
+git branch -d {branch}
+
+# Git - Undoing changes
+git reset HEAD {file}
+git checkout -- {file}
+git reset --hard HEAD~1
+git revert {commit}
+
+# Git - Remote management
+git remote -v
+git remote add origin {url}
+git fetch --all
+
+# System monitoring
+htop
+df -h
+du -sh {directory}
+free -h
+uptime
+ps aux | grep {process}
+
+# Network diagnostics
+ss -tuln
+netstat -tuln
+ip addr show
+curl -I {url}
+ping -c 4 {host}
+
+# File operations
+find {path} -name "{pattern}"
+grep -r "{pattern}" {path}
+tar -czf {archive.tar.gz} {directory}
+tar -xzf {archive.tar.gz}
+chmod +x {file}
+chown {user}:{group} {file}
+
+# Disk operations
+lsblk
+mount | grep {device}
+sudo mount {device} {mountpoint}
+sudo umount {mountpoint}
+EOF
+fi
+
+# Select command
+selected=$(grep -v '^#' "$COMMANDS_FILE" | grep -v '^$' | \
+    fzf --height=40% --reverse --prompt="Command: ")
+
+if [ -n "$selected" ]; then
+    if [ -n "$ZSH_VERSION" ]; then
+        print -z "$selected"
+    elif [ -n "$BASH_VERSION" ]; then
+        history -s "$selected"
+        echo "$selected"
+        echo "(Press ↑ to use)"
+    else
+        echo "$selected"
+    fi
+fi
