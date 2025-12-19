@@ -192,6 +192,102 @@ if [[ -n "$ARGS" ]]; then
     EXEC_START="$EXEC_START $ARGS"
 fi
 
+# 4.5. Service Type Detection
+print_section "Step 4.5: Service Type"
+echo "Systemd needs to know how your program behaves:"
+echo ""
+echo "  simple   - Program runs in foreground (most common)"
+echo "             Example: A Python script that loops forever"
+echo ""
+echo "  forking  - Program backgrounds itself and exits immediately"
+echo "             Example: Scripts using 'nohup ... &' or management scripts"
+echo ""
+
+# Try to detect if the script backgrounds processes
+SERVICE_TYPE="simple"
+USES_FORKING=false
+EXEC_STOP=""
+EXEC_RELOAD=""
+REMAIN_AFTER_EXIT="no"
+
+if [[ -f "$EXEC_PATH" ]]; then
+    if grep -q "nohup.*&" "$EXEC_PATH" 2>/dev/null; then
+        print_warning "Detected 'nohup ... &' pattern in script - this backgrounds processes"
+        USES_FORKING=true
+    elif grep -q "&$" "$EXEC_PATH" 2>/dev/null && grep -q "^start" "$EXEC_PATH" 2>/dev/null; then
+        print_warning "Detected backgrounding pattern in script"
+        USES_FORKING=true
+    fi
+fi
+
+if [[ "$USES_FORKING" == true ]]; then
+    echo "Your script appears to background processes."
+    echo ""
+    print_info "Recommendation: Use 'forking' type"
+    echo ""
+    if ask_yes_no "Use 'forking' type?" "y"; then
+        SERVICE_TYPE="forking"
+        REMAIN_AFTER_EXIT="yes"
+
+        # Ask if there's a stop command
+        echo ""
+        echo "Does your script have a 'stop' command?"
+        echo "Example: If you start with './script.sh start', can you stop with './script.sh stop'?"
+        echo ""
+        if ask_yes_no "Script has a stop command?"; then
+            STOP_CMD=$(ask_with_default "Stop command (e.g., 'stop')" "stop")
+            EXEC_STOP="$EXEC_PATH $STOP_CMD"
+
+            # Ask about restart command
+            echo ""
+            if ask_yes_no "Does it also have a 'restart' command?"; then
+                RESTART_CMD=$(ask_with_default "Restart command (e.g., 'restart')" "restart")
+                EXEC_RELOAD="$EXEC_PATH $RESTART_CMD"
+            fi
+        fi
+    fi
+else
+    echo "Does your program:"
+    echo "  - Use 'nohup ... &' to background processes?"
+    echo "  - Fork/daemonize itself?"
+    echo "  - Exit immediately after starting background services?"
+    echo ""
+    if ask_yes_no "Program backgrounds itself?"; then
+        SERVICE_TYPE="forking"
+        REMAIN_AFTER_EXIT="yes"
+
+        # Ask if there's a stop command
+        echo ""
+        echo "Does your script have a 'stop' command?"
+        if ask_yes_no "Script has a stop command?"; then
+            STOP_CMD=$(ask_with_default "Stop command argument" "stop")
+            if [[ "$STOP_CMD" == "$ARGS" ]]; then
+                # Stop cmd is different from start args
+                echo "What argument stops the service? (start was: $ARGS)"
+                STOP_ARG=$(ask_with_default "Stop argument" "stop")
+                EXEC_STOP="${EXEC_START/$ARGS/$STOP_ARG}"
+            else
+                EXEC_STOP="$EXEC_PATH $STOP_CMD"
+            fi
+
+            # Ask about restart command
+            echo ""
+            if ask_yes_no "Does it also have a 'restart' command?"; then
+                RESTART_CMD=$(ask_with_default "Restart command argument" "restart")
+                EXEC_RELOAD="$EXEC_PATH $RESTART_CMD"
+            fi
+        fi
+    fi
+fi
+
+print_success "Using service type: $SERVICE_TYPE"
+if [[ -n "$EXEC_STOP" ]]; then
+    print_info "Stop command: $EXEC_STOP"
+fi
+if [[ -n "$EXEC_RELOAD" ]]; then
+    print_info "Reload command: $EXEC_RELOAD"
+fi
+
 # 5. Working Directory
 print_section "Step 5: Working Directory (Optional)"
 echo "The directory the program should run from."
@@ -330,10 +426,30 @@ Description=$DESCRIPTION
 After=network.target
 
 [Service]
-Type=simple
+Type=$SERVICE_TYPE
 User=$RUN_USER
 WorkingDirectory=$WORK_DIR
-ExecStart=$EXEC_START
+ExecStart=$EXEC_START"
+
+# Add ExecStop if it exists
+if [[ -n "$EXEC_STOP" ]]; then
+    SERVICE_FILE_CONTENT="${SERVICE_FILE_CONTENT}
+ExecStop=$EXEC_STOP"
+fi
+
+# Add ExecReload if it exists
+if [[ -n "$EXEC_RELOAD" ]]; then
+    SERVICE_FILE_CONTENT="${SERVICE_FILE_CONTENT}
+ExecReload=$EXEC_RELOAD"
+fi
+
+# Add RemainAfterExit for forking services
+if [[ "$REMAIN_AFTER_EXIT" == "yes" ]]; then
+    SERVICE_FILE_CONTENT="${SERVICE_FILE_CONTENT}
+RemainAfterExit=yes"
+fi
+
+SERVICE_FILE_CONTENT="${SERVICE_FILE_CONTENT}
 Restart=$RESTART"
 
 if [[ "$RESTART" != "no" ]]; then
@@ -415,6 +531,9 @@ if [[ "$CAN_INSTALL" == true ]]; then
         echo "  Start:   sudo systemctl start ${SERVICE_NAME}"
         echo "  Stop:    sudo systemctl stop ${SERVICE_NAME}"
         echo "  Restart: sudo systemctl restart ${SERVICE_NAME}"
+        if [[ -n "$EXEC_RELOAD" ]]; then
+            echo "  Reload:  sudo systemctl reload ${SERVICE_NAME}  # Calls custom reload command"
+        fi
         echo "  Status:  sudo systemctl status ${SERVICE_NAME}"
         echo "  Logs:    sudo journalctl -u ${SERVICE_NAME} -f"
         echo "  Enable:  sudo systemctl enable ${SERVICE_NAME}  # Start on boot"

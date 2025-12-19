@@ -1,0 +1,19 @@
+[Unit]
+Description=mLog - Maintenance Log
+After=network.target
+
+[Service]
+Type=simple
+User=neil
+WorkingDirectory=/home/neil/apps/mlog
+ExecStart=/home/neil/apps/mlog/mlog-manage.sh start
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security: Don't allow new privileges
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
