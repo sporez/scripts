@@ -1,0 +1,116 @@
+# SSH Keys
+ssh-keygen -t ed25519 -C "{comment}"
+ssh-copy-id -i ~/.ssh/{key_name}.pub {user}@{host}
+ssh-add ~/.ssh/{key_name}
+eval "$(ssh-agent -s)"
+
+# SSH Tunneling
+ssh -L {local_port}:localhost:{remote_port} {user}@{host}
+ssh -D {local_port} {user}@{host}  # SOCKS proxy
+ssh -R {remote_port}:localhost:{local_port} {user}@{host}
+ssh -N -f -L {local_port}:localhost:{remote_port} {user}@{host}  # background
+
+# File transfers
+scp {user}@{host}:{remote_path} {local_path}
+scp -r {local_dir} {user}@{host}:{remote_path}
+rsync -avz -e ssh {user}@{host}:{remote_path} {local_path}
+rsync -avz --delete {source}/ {destination}/
+rsync -avzP --exclude='node_modules' {source}/ {dest}/  # with progress
+
+# Podman - Container management
+podman ps -a
+podman logs -f {container}
+podman exec -it {container} /bin/bash
+podman stop {container}
+podman rm {container}
+podman inspect {container}
+podman run -d --name {name} -p {host_port}:{container_port} {image}
+
+# Podman - Images
+podman images
+podman pull {image}
+podman rmi {image}
+podman build -t {tag} .
+
+# Podman - Volumes
+podman volume ls
+podman volume inspect {volume}
+podman volume create {volume}
+
+# Podman - Networks
+podman network ls
+podman network inspect {network}
+
+# Systemd - Services
+systemctl status {service}
+systemctl start {service}
+systemctl stop {service}
+systemctl restart {service}
+systemctl enable {service}
+systemctl disable {service}
+systemctl --user status {service}
+systemctl --user restart {service}
+
+# Systemd - Logs
+journalctl -fu {service}
+journalctl -u {service} --since "1 hour ago"
+journalctl -u {service} --since today
+journalctl -xe
+journalctl --disk-usage
+journalctl --vacuum-time=7d
+
+# Git - Daily operations
+git status
+git add {file}
+git commit -m "{message}"
+git push origin {branch}
+git pull origin {branch}
+git diff {file}
+git log --oneline --graph --all -n 20
+
+# Git - Branch management
+git branch
+git checkout -b {new_branch}
+git checkout {branch}
+git merge {branch}
+git branch -d {branch}
+
+# Git - Undoing changes
+git reset HEAD {file}
+git checkout -- {file}
+git reset --hard HEAD~1
+git revert {commit}
+
+# Git - Remote management
+git remote -v
+git remote add origin {url}
+git fetch --all
+
+# System monitoring
+htop
+df -h
+du -sh {directory}
+free -h
+uptime
+ps aux | grep {process}
+
+# Network diagnostics
+ss -tuln
+netstat -tuln
+ip addr show
+curl -I {url}
+ping -c 4 {host}
+
+# File operations
+find {path} -name "{pattern}"
+grep -r "{pattern}" {path}
+tar -czf {archive.tar.gz} {directory}
+tar -xzf {archive.tar.gz}
+chmod +x {file}
+chown {user}:{group} {file}
+
+# Disk operations
+lsblk
+mount | grep {device}
+sudo mount {device} {mountpoint}
+sudo umount {mountpoint}

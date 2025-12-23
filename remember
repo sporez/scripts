@@ -3,6 +3,7 @@
 SCRIPT_NAME="remember"
 INSTALL_DIR="${HOME}/.local/bin"
 COMMANDS_FILE="${HOME}/.remember-commands.txt"
+GITHUB_RAW_URL="https://raw.githubusercontent.com/sporez/scripts/main/remember-commands.txt"
 
 # Add INSTALL_DIR to PATH for current session (so fzf can be found after install)
 export PATH="$INSTALL_DIR:$PATH"
@@ -152,40 +153,8 @@ install_fzf() {
     echo "✅ fzf installed successfully!"
 }
 
-# Check for fzf
-if ! command -v fzf &> /dev/null; then
-    install_fzf
-fi
-
-# Auto-install if not in proper location
-CURRENT_PATH="$(readlink -f "$0" 2>/dev/null || realpath "$0" 2>/dev/null || echo "$0")"
-CURRENT_DIR="$(dirname "$CURRENT_PATH")"
-
-if [ "$CURRENT_DIR" != "$INSTALL_DIR" ]; then
-    echo "🚀 First run detected - installing..."
-    mkdir -p "$INSTALL_DIR"
-    cp "$0" "$INSTALL_DIR/$SCRIPT_NAME"
-    chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
-    echo "✅ Installed to $INSTALL_DIR/$SCRIPT_NAME"
-    
-    # Fix PATH if needed
-    if ! in_path "$INSTALL_DIR"; then
-        add_to_path
-    fi
-    
-    # Re-exec from new location if PATH is fixed
-    if in_path "$INSTALL_DIR"; then
-        echo "🎯 Running from installed location..."
-        exec "$INSTALL_DIR/$SCRIPT_NAME" "$@"
-    else
-        echo "⚠️  PATH updated but not active in this shell"
-        echo "Run: $SCRIPT_NAME (after restarting shell)"
-        exit 0
-    fi
-fi
-
-# Create default commands file if it doesn't exist
-if [ ! -f "$COMMANDS_FILE" ]; then
+# Function to create default commands (fallback)
+create_default_commands() {
     cat > "$COMMANDS_FILE" << 'EOF'
 # SSH Keys
 ssh-keygen -t ed25519 -C "{comment}"
@@ -304,6 +273,83 @@ mount | grep {device}
 sudo mount {device} {mountpoint}
 sudo umount {mountpoint}
 EOF
+}
+
+# Function to update commands from GitHub
+update_commands_from_github() {
+    local temp_file="${COMMANDS_FILE}.tmp"
+
+    echo "📥 Fetching commands from GitHub..."
+
+    # Try to download from GitHub
+    if command -v curl &> /dev/null; then
+        if curl -sf "$GITHUB_RAW_URL" -o "$temp_file" 2>/dev/null; then
+            mv "$temp_file" "$COMMANDS_FILE"
+            echo "✅ Commands updated from GitHub!"
+            return 0
+        fi
+    elif command -v wget &> /dev/null; then
+        if wget -q "$GITHUB_RAW_URL" -O "$temp_file" 2>/dev/null; then
+            mv "$temp_file" "$COMMANDS_FILE"
+            echo "✅ Commands updated from GitHub!"
+            return 0
+        fi
+    fi
+
+    # Cleanup temp file if it exists
+    rm -f "$temp_file"
+
+    # Fallback to default if GitHub fetch failed
+    echo "⚠️  Could not fetch from GitHub (offline or connection issue)"
+    echo "📝 Using built-in default commands..."
+    create_default_commands
+    return 1
+}
+
+# Parse command line arguments
+if [ "$1" = "-u" ] || [ "$1" = "--update" ]; then
+    if [ ! -f "$COMMANDS_FILE" ]; then
+        echo "⚠️  Commands file doesn't exist yet, creating it..."
+    fi
+    update_commands_from_github
+    exit 0
+fi
+
+# Check for fzf
+if ! command -v fzf &> /dev/null; then
+    install_fzf
+fi
+
+# Auto-install if not in proper location
+CURRENT_PATH="$(readlink -f "$0" 2>/dev/null || realpath "$0" 2>/dev/null || echo "$0")"
+CURRENT_DIR="$(dirname "$CURRENT_PATH")"
+
+if [ "$CURRENT_DIR" != "$INSTALL_DIR" ]; then
+    echo "🚀 First run detected - installing..."
+    mkdir -p "$INSTALL_DIR"
+    cp "$0" "$INSTALL_DIR/$SCRIPT_NAME"
+    chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
+    echo "✅ Installed to $INSTALL_DIR/$SCRIPT_NAME"
+    
+    # Fix PATH if needed
+    if ! in_path "$INSTALL_DIR"; then
+        add_to_path
+    fi
+    
+    # Re-exec from new location if PATH is fixed
+    if in_path "$INSTALL_DIR"; then
+        echo "🎯 Running from installed location..."
+        exec "$INSTALL_DIR/$SCRIPT_NAME" "$@"
+    else
+        echo "⚠️  PATH updated but not active in this shell"
+        echo "Run: $SCRIPT_NAME (after restarting shell)"
+        exit 0
+    fi
+fi
+
+# Create default commands file if it doesn't exist
+if [ ! -f "$COMMANDS_FILE" ]; then
+    update_commands_from_github
 fi
 
 # Select command
