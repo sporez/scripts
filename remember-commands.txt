@@ -51,6 +51,12 @@ systemctl disable {service}
 systemctl --user status {service}
 systemctl --user restart {service}
 
+# Systemd - Listing services
+systemctl --user list-units --type=service --state=running
+systemctl --user list-units --type=service --all
+systemctl --user list-units --type=service --state=failed
+systemctl --user list-unit-files --type=service
+
 # Systemd - Logs
 journalctl -fu {service}
 journalctl -u {service} --since "1 hour ago"
