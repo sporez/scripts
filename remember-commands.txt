@@ -94,6 +94,23 @@ free -h
 uptime
 ps aux | grep {process}
 
+# Process operations
+lsof -i :{port}  # find process using a port
+netstat -tulpn | grep :{port}  # alternative to find process on port
+ps aux | grep {process_name}
+pgrep -f {process_name}
+pkill -f {process_name}
+kill -9 {PID}
+killall {process_name}
+ps -u {username}  # list processes by user
+top -p {PID}  # monitor specific process
+pstree -p {PID}  # show process tree
+lsof -p {PID}  # list files opened by process
+nice -n {priority} {command}  # run with priority (-20 to 19)
+renice -n {priority} -p {PID}  # change priority of running process
+nohup {command} &  # run process immune to hangups
+disown -h {job_id}  # keep process running after shell exit
+
 # Network diagnostics
 ss -tuln
 netstat -tuln
