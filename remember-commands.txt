@@ -137,3 +137,5 @@ lsblk
 mount | grep {device}
 sudo mount {device} {mountpoint}
 sudo umount {mountpoint}
+
+python -m http.server 9100
