@@ -15,7 +15,6 @@ BROWSER_HEADERS = {
     ),
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
     "DNT": "1",
     "Connection": "keep-alive",
     "Upgrade-Insecure-Requests": "1",
@@ -41,4 +40,8 @@ async def fetch(url: str = Query(...), key: str = Query(...)):
         return JSONResponse(status_code=502, content={"error": str(e)})
 
     content_type = resp.headers.get("content-type", "text/html")
+    is_text = any(t in content_type for t in ("text/", "json", "xml", "javascript"))
+
+    if is_text:
+        return Response(content=resp.text, status_code=resp.status_code, media_type=content_type)
     return Response(content=resp.content, status_code=resp.status_code, media_type=content_type)
