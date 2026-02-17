@@ -1,0 +1,14 @@
+[Unit]
+Description=Fetch Proxy
+After=network.target
+
+[Service]
+User=neil
+WorkingDirectory=/home/neil/fetch-proxy
+EnvironmentFile=/home/neil/fetch-proxy/.env
+ExecStart=/home/neil/fetch-proxy/venv/bin/uvicorn main:app --host 127.0.0.1 --port 3100
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
