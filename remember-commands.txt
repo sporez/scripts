@@ -138,4 +138,41 @@ mount | grep {device}
 sudo mount {device} {mountpoint}
 sudo umount {mountpoint}
 
+# Tmux - Session management
+tmux new -s {session}
+tmux attach -t {session}
+tmux detach  # or Ctrl-b d
+tmux ls
+tmux kill-session -t {session}
+tmux kill-server
+tmux rename-session -t {old_name} {new_name}
+
+# Tmux - Window management (Ctrl-b prefix)
+tmux new-window  # Ctrl-b c
+tmux rename-window {name}  # Ctrl-b ,
+tmux next-window  # Ctrl-b n
+tmux previous-window  # Ctrl-b p
+tmux select-window -t {number}  # Ctrl-b {number}
+tmux kill-window  # Ctrl-b &
+tmux list-windows
+
+# Tmux - Pane management
+tmux split-window -h  # Ctrl-b % (vertical split)
+tmux split-window -v  # Ctrl-b " (horizontal split)
+tmux select-pane -L  # Ctrl-b Left (move left)
+tmux select-pane -R  # Ctrl-b Right (move right)
+tmux select-pane -U  # Ctrl-b Up (move up)
+tmux select-pane -D  # Ctrl-b Down (move down)
+tmux kill-pane  # Ctrl-b x
+tmux resize-pane -L {n}  # resize left by n cells
+tmux resize-pane -R {n}  # resize right by n cells
+tmux swap-pane -U  # swap with previous pane
+tmux swap-pane -D  # swap with next pane
+
+# Tmux - Useful shortcuts
+tmux send-keys -t {session}:{window} "{command}" Enter  # send command to pane
+tmux capture-pane -t {session} -p  # capture pane output
+tmux list-keys  # show all keybindings
+tmux source-file ~/.tmux.conf  # reload config
+
 python -m http.server 9100
