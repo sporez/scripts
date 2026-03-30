@@ -1,0 +1,12 @@
+[Unit]
+Description=Redlib - Private Reddit Frontend
+After=network.target
+
+[Service]
+User=neil
+ExecStart=/usr/local/bin/redlib -p 8089 -a 127.0.0.1
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

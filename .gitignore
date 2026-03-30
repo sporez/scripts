@@ -1,2 +1,81 @@
-apps.json
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.venv/
+venv/
+ENV/
+env/
+
+# Virtual environments
+.asks-venv/
+ask/
+
+# Environment files
 .env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Logs
+*.log
+logs/
+mlog.service
+
+# Data/Config (example - remove if you track these)
+ccusage/*.json
+ccusage/*.csv
+ccusage/*.db
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*.orig
+cache/
+*.cache
+
+# Testing
+test-results/
+.nox/
+.pytest_cache/

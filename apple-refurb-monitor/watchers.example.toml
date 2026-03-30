@@ -1,0 +1,41 @@
+poll_interval_seconds = 300
+state_file = "state.json"
+
+[pushover]
+token = "YOUR_PUSHOVER_APP_TOKEN"
+user = "YOUR_PUSHOVER_USER_KEY"
+device = ""
+priority = 0
+sound = ""
+
+[[watchers]]
+id = "mba-m4-16gb-under-1300"
+enabled = true
+store = "us"
+category = "macs"
+name_contains_all = ["MacBook Air", "M4", "16GB"]
+name_contains_any = []
+exclude_contains = []
+name_regex = ""
+min_price = 0
+max_price = 1300
+min_saving = 0
+min_saving_percentage = 0
+model_in = []
+alert_title = "MacBook Air match"
+
+[[watchers]]
+id = "ipad-mini-under-500"
+enabled = true
+store = "us"
+category = "ipads"
+name_contains_all = ["iPad mini"]
+name_contains_any = []
+exclude_contains = []
+name_regex = ""
+min_price = 0
+max_price = 500
+min_saving = 0
+min_saving_percentage = 0
+model_in = []
+alert_title = "iPad mini match"

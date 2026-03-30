@@ -1,0 +1,450 @@
+#!/usr/bin/env python3
+
+"""Tiny CLI chat client for OpenAI-compatible endpoints."""
+
+import argparse
+import importlib
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import textwrap
+
+
+DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_TIMEOUT = 300
+DEFAULT_RENDER_WIDTH = 88
+BASE_URL_VARS = (
+    "OPENAI_BASE_URL",
+    "OPENAI_API_BASE",
+    "OPENAI_API_BASE_URL",
+    "OPENAI_ENDPOINT",
+)
+API_KEY_VARS = (
+    "OPENAI_API_KEY",
+    "OPENAI_KEY",
+)
+MODEL_VARS = (
+    "OPENAI_MODEL",
+    "OPENAI_CHAT_MODEL",
+)
+DEBUG_VARS = (
+    "ASK_DEBUG",
+    "OPENAI_DEBUG",
+)
+QUIT_COMMANDS = {":q", ":quit", "quit", "exit"}
+SCRIPT_PATH = Path(__file__).resolve()
+SCRIPT_DIR = SCRIPT_PATH.parent
+VENV_DIR = Path(os.getenv("ASK_VENV_DIR", str(SCRIPT_DIR / ".ask-venv")))
+VENV_PYTHON = VENV_DIR / "bin" / "python"
+
+
+def read_first_env(names, default=None):
+    for name in names:
+        value = os.getenv(name)
+        if value:
+            return value
+    return default
+
+
+def env_flag_enabled(names):
+    for name in names:
+        value = os.getenv(name)
+        if value and value.strip().lower() not in {"0", "false", "no", "off"}:
+            return True
+    return False
+
+
+def print_debug(message):
+    if env_flag_enabled(DEBUG_VARS):
+        print(f"debug> {message}", file=sys.stderr)
+
+
+def print_session_info(endpoint, model, timeout):
+    print(
+        f"session> endpoint={endpoint} model={model} timeout={timeout}s",
+        file=sys.stderr,
+    )
+
+
+def is_quit_command(text):
+    return text.strip().lower() in QUIT_COMMANDS
+
+
+def normalize_base_url(raw_url):
+    url = raw_url.rstrip("/")
+    if url.endswith("/chat/completions"):
+        return url[: -len("/chat/completions")]
+    if url.endswith("/v1"):
+        return url
+    return f"{url}/v1"
+
+
+def using_local_venv():
+    return os.getenv("ASK_USING_LOCAL_VENV") == "1"
+
+
+def maybe_reexec_in_local_venv():
+    if using_local_venv() or not VENV_PYTHON.exists():
+        return
+
+    env = os.environ.copy()
+    env["ASK_USING_LOCAL_VENV"] = "1"
+    os.execvpe(str(VENV_PYTHON), [str(VENV_PYTHON), str(SCRIPT_PATH), *sys.argv[1:]], env)
+
+
+def install_openai_in_local_venv():
+    if not VENV_PYTHON.exists():
+        result = subprocess.run([sys.executable, "-m", "venv", str(VENV_DIR)], check=False)
+        if result.returncode != 0:
+            raise RuntimeError(f"Failed to create local virtual environment at {VENV_DIR}.")
+
+    result = subprocess.run([str(VENV_PYTHON), "-m", "pip", "install", "openai"], check=False)
+    if result.returncode != 0:
+        raise RuntimeError(
+            "Failed to install 'openai' in the local virtual environment. "
+            f"Try manually: {VENV_PYTHON} -m pip install openai"
+        )
+
+
+def prompt_install_openai():
+    if not sys.stdin.isatty():
+        raise RuntimeError(
+            "The 'openai' package is not installed. Re-run interactively to install it "
+            f"into {VENV_DIR}."
+        )
+
+    try:
+        answer = input(
+            f"The 'openai' package is missing. Install it into {VENV_DIR}? [Y/n] "
+        ).strip().lower()
+    except (EOFError, KeyboardInterrupt) as exc:
+        raise RuntimeError("Install cancelled.") from exc
+
+    if answer not in ("", "y", "yes"):
+        raise RuntimeError("Install cancelled.")
+
+    install_openai_in_local_venv()
+    importlib.invalidate_caches()
+
+
+def load_openai_class():
+    try:
+        module = importlib.import_module("openai")
+    except ImportError:
+        prompt_install_openai()
+
+        if not using_local_venv():
+            print("Restarting with local environment...")
+            maybe_reexec_in_local_venv()
+
+        try:
+            module = importlib.import_module("openai")
+        except ImportError as exc:
+            raise RuntimeError("The 'openai' package is still unavailable after install.") from exc
+
+    return module.OpenAI
+
+
+def extract_text(payload):
+    try:
+        content = payload["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise RuntimeError("Endpoint returned an unexpected response.") from exc
+
+    if isinstance(content, str):
+        return content.strip()
+
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                parts.append(item.get("text", ""))
+        text = "\n".join(part for part in parts if part).strip()
+        if text:
+            return text
+
+    raise RuntimeError("Endpoint returned an empty message.")
+
+
+def summarize_exception(exc):
+    parts = []
+    seen = set()
+    current = exc
+
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        message = str(current).strip() or repr(current)
+        parts.append(f"{type(current).__name__}: {message}")
+        current = current.__cause__ or current.__context__
+
+    return " <- ".join(parts)
+
+
+def format_request_error(exc, endpoint, model, timeout):
+    details = []
+    message = str(exc).strip()
+    status_code = getattr(exc, "status_code", None)
+    response = getattr(exc, "response", None)
+
+    if message:
+        details.append(message)
+    if status_code is not None:
+        details.append(f"status={status_code}")
+
+    if response is not None:
+        try:
+            body = response.text.strip()
+        except Exception:
+            body = ""
+        if body:
+            if len(body) > 400:
+                body = f"{body[:397]}..."
+            details.append(f"body={body}")
+
+    error = f"Request failed ({type(exc).__name__})"
+    if details:
+        error = f"{error}: {'; '.join(details)}"
+
+    lower_message = message.lower()
+    if "timed out" in lower_message or "timeout" in lower_message:
+        error = (
+            f"{error}. The model may still be loading; try a higher OPENAI_TIMEOUT "
+            f"(current: {timeout}s)."
+        )
+    elif type(exc).__name__ == "APIConnectionError":
+        error = (
+            f"{error}. Check that this machine can reach the LM Studio host and port."
+        )
+
+    print_debug(f"endpoint={endpoint} model={model} timeout={timeout}s")
+    print_debug(f"error-chain={summarize_exception(exc)}")
+    return error
+
+
+def request_chat(client, messages, model, endpoint, timeout):
+    print_debug(
+        f"sending request to {endpoint}/chat/completions model={model} "
+        f"messages={len(messages)} timeout={timeout}s"
+    )
+
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=0.4,
+        )
+    except Exception as exc:
+        raise RuntimeError(format_request_error(exc, endpoint, model, timeout)) from exc
+
+    payload = response.model_dump()
+    return extract_text(payload)
+
+
+def wrap_line(text, initial_indent="", subsequent_indent=""):
+    return textwrap.fill(
+        text,
+        width=DEFAULT_RENDER_WIDTH,
+        initial_indent=initial_indent,
+        subsequent_indent=subsequent_indent,
+        replace_whitespace=False,
+    )
+
+
+def format_markdown(text):
+    rendered = []
+    paragraph = []
+    in_code_block = False
+
+    def flush_paragraph():
+        if not paragraph:
+            return
+        combined = " ".join(part.strip() for part in paragraph if part.strip())
+        if combined:
+            rendered.extend(wrap_line(combined).splitlines())
+        paragraph.clear()
+
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip()
+        stripped = line.strip()
+
+        if stripped.startswith("```"):
+            flush_paragraph()
+            in_code_block = not in_code_block
+            if rendered and rendered[-1] != "":
+                rendered.append("")
+            continue
+
+        if in_code_block:
+            rendered.append(line)
+            continue
+
+        if not stripped:
+            flush_paragraph()
+            if rendered and rendered[-1] != "":
+                rendered.append("")
+            continue
+
+        heading_match = re.match(r"^(#{1,6})\s+(.*)$", stripped)
+        if heading_match:
+            flush_paragraph()
+            title = heading_match.group(2).strip()
+            if rendered and rendered[-1] != "":
+                rendered.append("")
+            rendered.append(title)
+            rendered.append("-" * min(len(title), DEFAULT_RENDER_WIDTH))
+            continue
+
+        bullet_match = re.match(r"^([-*+])\s+(.*)$", stripped)
+        if bullet_match:
+            flush_paragraph()
+            rendered.extend(wrap_line(bullet_match.group(2), "- ", "  ").splitlines())
+            continue
+
+        numbered_match = re.match(r"^(\d+\.)\s+(.*)$", stripped)
+        if numbered_match:
+            flush_paragraph()
+            marker = f"{numbered_match.group(1)} "
+            rendered.extend(
+                wrap_line(numbered_match.group(2), marker, " " * len(marker)).splitlines()
+            )
+            continue
+
+        quote_match = re.match(r"^>\s?(.*)$", stripped)
+        if quote_match:
+            flush_paragraph()
+            rendered.extend(wrap_line(quote_match.group(1), "> ", "> ").splitlines())
+            continue
+
+        if stripped.startswith(("|", "---", "***")):
+            flush_paragraph()
+            rendered.append(line)
+            continue
+
+        paragraph.append(line)
+
+    flush_paragraph()
+
+    return "\n".join(rendered).strip()
+
+
+def print_reply(text):
+    print()
+    print("assistant>")
+    print(format_markdown(text))
+
+
+def parse_args(argv):
+    parser = argparse.ArgumentParser(
+        prog="ask",
+        description="Tiny CLI chat for an OpenAI-compatible endpoint.",
+    )
+    parser.add_argument("prompt", nargs="+", help="Your first question.")
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    maybe_reexec_in_local_venv()
+    args = parse_args(argv or sys.argv[1:])
+    initial_prompt = " ".join(args.prompt).strip()
+
+    if is_quit_command(initial_prompt):
+        return 0
+
+    try:
+        openai_class = load_openai_class()
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    base_url = read_first_env(BASE_URL_VARS)
+    if not base_url:
+        names = ", ".join(BASE_URL_VARS)
+        print(f"Set one of these env vars first: {names}", file=sys.stderr)
+        return 1
+
+    endpoint = normalize_base_url(base_url)
+    api_key = read_first_env(API_KEY_VARS)
+    model = read_first_env(MODEL_VARS, DEFAULT_MODEL)
+    timeout = int(os.getenv("OPENAI_TIMEOUT", DEFAULT_TIMEOUT))
+
+    client = openai_class(
+        base_url=endpoint,
+        api_key=api_key or "not-needed",
+        timeout=timeout,
+    )
+    print_session_info(endpoint, model, timeout)
+    print_debug(f"using endpoint={endpoint}")
+    print_debug(f"using model={model}")
+    print_debug(f"using timeout={timeout}s")
+
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a helpful CLI assistant. Keep replies short, direct, and easy "
+                "to follow."
+            ),
+        },
+        {"role": "user", "content": initial_prompt},
+    ]
+    last_failed_prompt = None
+
+    try:
+        reply = request_chat(client, messages, model, endpoint, timeout)
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        last_failed_prompt = messages.pop()["content"]
+        print(
+            "Initial request did not complete. Type :retry once the model is ready, "
+            "or ask something else.",
+            file=sys.stderr,
+        )
+    else:
+        messages.append({"role": "assistant", "content": reply})
+        print_reply(reply)
+
+    print("\nType another question, :retry for the last failed prompt, or :q to quit.")
+
+    while True:
+        try:
+            follow_up = input("you> ").strip()
+        except EOFError:
+            print()
+            return 0
+        except KeyboardInterrupt:
+            print()
+            return 0
+
+        if is_quit_command(follow_up):
+            return 0
+        if follow_up == ":retry":
+            if not last_failed_prompt:
+                print("No failed prompt to retry.")
+                continue
+            current_prompt = last_failed_prompt
+            print("Retrying last failed prompt...")
+        else:
+            current_prompt = follow_up
+
+        if not follow_up:
+            continue
+
+        messages.append({"role": "user", "content": current_prompt})
+
+        try:
+            reply = request_chat(client, messages, model, endpoint, timeout)
+        except RuntimeError as exc:
+            print(str(exc), file=sys.stderr)
+            last_failed_prompt = messages[-1]["content"]
+            messages.pop()
+            continue
+
+        last_failed_prompt = None
+        messages.append({"role": "assistant", "content": reply})
+        print_reply(reply)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

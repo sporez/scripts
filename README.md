@@ -78,6 +78,30 @@ Interactive script to create systemd service files for your scripts and programs
 sudo ./create-systemd-service.sh
 ```
 
+### 4. Agent Config Sync (`agent-sync.sh`)
+
+Sync OpenCode and Pi user-level config between machines with `rsync` over SSH.
+
+**Features:**
+- Supports `OpenCode` and `Pi`
+- Syncs config parts selectively or as a default bundle
+- Keeps auth opt-in only
+- Auto-detects OpenCode config file variants
+- Supports `push`, `pull`, `list`, and `paths`
+- Offers `--dry-run`, `--backup`, and optional `--delete`
+
+**Quick Start:**
+```bash
+# See supported agents and parts
+./agent-sync.sh list
+
+# Inspect local paths
+./agent-sync.sh paths --agent all
+
+# Dry-run a default sync to another machine
+./agent-sync.sh push --host user@newbox --agent all --part default --dry-run
+```
+
 ## Requirements
 
 - **App Dashboard**: Any modern web browser (Chrome, Firefox, Safari, Edge)
