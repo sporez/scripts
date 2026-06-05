@@ -176,3 +176,11 @@ tmux list-keys  # show all keybindings
 tmux source-file ~/.tmux.conf  # reload config
 
 python -m http.server 9100
+
+#Generate API Key
+openssl rand -base64 32 | tr -d '/+=' | head -c 43
+
+#Make directory immutable and undo it
+sudo chattr +i /path/to/dir
+sudo chattr -i /path/to/dir
+lsattr -d /path/to/dir

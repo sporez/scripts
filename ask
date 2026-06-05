@@ -76,7 +76,7 @@ def normalize_base_url(raw_url):
     url = raw_url.rstrip("/")
     if url.endswith("/chat/completions"):
         return url[: -len("/chat/completions")]
-    if url.endswith("/v1"):
+    if re.search(r"/v\d+(?:/|$)", url):
         return url
     return f"{url}/v1"
 
@@ -85,8 +85,53 @@ def using_local_venv():
     return os.getenv("ASK_USING_LOCAL_VENV") == "1"
 
 
+def get_python_purelib(python_path):
+    result = subprocess.run(
+        [
+            str(python_path),
+            "-c",
+            "import sysconfig; print(sysconfig.get_paths()['purelib'])",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return None
+
+    purelib = result.stdout.strip()
+    return Path(purelib) if purelib else None
+
+
+def local_venv_needs_repair():
+    if not VENV_PYTHON.exists():
+        return False
+
+    purelib = get_python_purelib(VENV_PYTHON)
+    return purelib is None or not purelib.exists()
+
+
+def repair_local_venv():
+    print(f"Repairing local virtual environment at {VENV_DIR}...", file=sys.stderr)
+
+    result = subprocess.run(
+        [sys.executable, "-m", "venv", "--clear", str(VENV_DIR)],
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to repair local virtual environment at {VENV_DIR}.")
+
+    install_openai_in_local_venv()
+
+
 def maybe_reexec_in_local_venv():
-    if using_local_venv() or not VENV_PYTHON.exists():
+    if using_local_venv():
+        return
+
+    if local_venv_needs_repair():
+        repair_local_venv()
+
+    if not VENV_PYTHON.exists():
         return
 
     env = os.environ.copy()

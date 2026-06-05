@@ -30,7 +30,7 @@ ENV/
 env/
 
 # Virtual environments
-.asks-venv/
+.ask-venv/
 ask/
 
 # Environment files
